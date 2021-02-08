@@ -226,9 +226,9 @@ if __name__ == '__main__':
     main()
 ```
 
-Save the above code into calc1.py file or download it directly from GitHub. Before you start digging deeper into the code, run the calculator on the command line and see it in action. Play with it! Here is a sample session on my laptop (if you want to run the calculator under Python3 you will need to replace raw_input with input):
+Save the above code into calc1.py file or download it directly from [GitHub](https://github.com/rspivak/lsbasi/blob/master/part1/calc1.py). Before you start digging deeper into the code, run the calculator on the command line and see it in action. Play with it! Here is a sample session on my laptop (if you want to run the calculator under Python3 you will need to replace raw_input with input):
 
-将以上代码保存至 calc1.py 文件中，或者直接从 Github 中下载。你开始迁就代码之前，先在命令行中运行查看结果。玩吧！下面是一些样例。（如果想在 Python3 中运行代码，你需要将 raw_input 修改为 input）。
+将以上代码保存至 calc1.py 文件中，或者直接从 Github 中下载。在你开始研究代码之前，先在命令行中运行查看结果。玩吧！下面是一些样例。（如果想在 Python3 中运行代码，你需要将 raw_input 修改为 input）。
 
 ```python
 $ python calc1.py
@@ -275,23 +275,31 @@ The process of breaking the input string into tokens is called lexical analysis.
 
 The method get_next_token of the Interpreter class is your lexical analyzer. Every time you call it, you get the next token created from the input of characters passed to the interpreter. Let’s take a closer look at the method itself and see how it actually does its job of converting characters into tokens. The input is stored in the variable text that holds the input string and pos is an index into that string (think of the string as an array of characters). pos is initially set to 0 and points to the character ‘3’. The method first checks whether the character is a digit and if so, it increments pos and returns a token instance with the type INTEGER and the value set to the integer value of the string ‘3’, which is an integer 3:
 
-解释器类的 get_next_token 方法是你的词法分析。每次你调用它时，你将
+解释器类的 get_next_token 方法是你的词法分析。每次你调用它时，你将会从输入到解释器的输入字符中得到下一个被创建的 token 。接下来仔细查看这个方法本身并且理解如何将字符转换为 tokens 。输入被存放在变量文本中，pos 是该字符串的索引。（将字符串想象成一个字符数组）。pos 被初始化为 0 指向字符串 ’3‘。这个方法首先检查字符是否是数字，如果是那么 pos 自增并且返回当i去哪 token 的实现，type 是 “INTEGER” value 被设置为字符串 ’3‘。
 
 ![](../img/lsbasi_part1_lexer1.png)
 
 The pos now points to the ‘+’ character in the text. The next time you call the method, it tests if a character at the position pos is a digit and then it tests if the character is a plus sign, which it is. As a result the method increments pos and returns a newly created token with the type PLUS and value ‘+’:
 
+现在文本的索引 pos 指向了 ’+‘ 。下次你调用这个方法时，它会检测当前位置的字符是整数然后再检测字符是否是加法符号。这个方法的结果是 pos 增加并返回一个新创建的 token，类型为 PLUS 值为 “+”：
+
 ![](../img/lsbasi_part1_lexer2.png)
 
 The pos now points to character ‘5’. When you call the get_next_token method again the method checks if it’s a digit, which it is, so it increments pos and returns a new INTEGER token with the value of the token set to integer 5:
+
+pos 当前指向的位置是 ’5‘。当你开始调用 get_next_token 方法时会再次调用方法检查该值是否是一个整数。pos 增加并返回一个 token，该 token 的 type 是 INTEGER，value 是 5 。
 
 ![](../img/lsbasi_part1_lexer3.png)
 
 Because the pos index is now past the end of the string “3+5” the get_next_token method returns the EOF token every time you call it:
 
+因为 pos 索引现在已经过了字符串 "3+5 "的结尾，所以后续再调用 get_next_token 方法都会返回 EOF 标记。
+
 ![](../img/lsbasi_part1_lexer4.png)
 
 Try it out and see for yourself how the lexer component of your calculator works:
+
+尝试并查看 lexer 组件在计算机中是如何工作的。
 
 ```python
 >>> from calc1 import Interpreter
@@ -313,65 +321,123 @@ Token(EOF, None)
 
 So now that your interpreter has access to the stream of tokens made from the input characters, the interpreter needs to do something with it: it needs to find the structure in the flat stream of tokens it gets from the lexer get_next_token. Your interpreter expects to find the following structure in that stream: INTEGER -> PLUS -> INTEGER. That is, it tries to find a sequence of tokens: integer followed by a plus sign followed by an integer.
 
+所以，目前为止，你的解释器可以访问由输入字符所组成的 tokens 序列。解释器需要对它做一些事情：它需要根据 lexer get_next_token 从 tokens 流中找到结构。解释器希望在该流中找到以下结构。INTEGER -> PLUS -> INTEGER. 也就是说，它试图找到一个 token 序列：整数后面跟着一个加号，然后是一个整数。
+
 The method responsible for finding and interpreting that structure is expr. This method verifies that the sequence of tokens does indeed correspond to the expected sequence of tokens, i.e INTEGER -> PLUS -> INTEGER. After it’s successfully confirmed the structure, it generates the result by adding the value of the token on the left side of the PLUS and the right side of the PLUS, thus successfully interpreting the arithmetic expression you passed to the interpreter.
+
+负责寻址和解释该结构的方法是 expr。该方法验证了 tokens 序列，这个方法验证了 token 的序列确实符合预期的 token 序列，即INTEGER -> PLUS -> INTEGER。之后它可以成功的验证该结构，通过累加左边 token 和右边 token 的值来生成结果，因为成功的解释
 
 The expr method itself uses the helper method eat to verify that the token type passed to the eat method matches the current token type. After matching the passed token type the eat method gets the next token and assigns it to the current_token variable, thus effectively “eating” the currently matched token and advancing the imaginary pointer in the stream of tokens. If the structure in the stream of tokens doesn’t correspond to the expected INTEGER PLUS INTEGER sequence of tokens the eat method throws an exception.
 
+expr方法本身使用helper方法eat来验证传递给eat方法的token类型是否与当前的token类型匹配。在匹配了传递的令牌类型后，eat方法获取下一个令牌，并将其赋值给current_token变量，从而有效地 "吃掉 "当前匹配的令牌，并推进令牌流中的虚指针。如果令牌流中的结构与预期的INTEGER PLUS INTEGER序列的令牌不一致，eat方法就会抛出一个异常。
+
 Let’s recap what your interpreter does to evaluate an arithmetic expression:
 
+让我们来会议一下，你的解释器在计算算术表达式的流程。
+
 * The interpreter accepts an input string, let’s say “3+5”
+
+解释器结构一个字符串的输入，“3+5” 。
+
 * The interpreter calls the expr method to find a structure in the stream of tokens returned by the lexical analyzer get_next_token. The structure it tries to find is of the form INTEGER PLUS INTEGER. After it’s confirmed the structure, it interprets the input by adding the values of two INTEGER tokens because it’s clear to the interpreter at that point that what it needs to do is add two integers, 3 and 5.
+
+解释器调用expr方法，在词法分析器 get_next_token 返回的 tokens 流中找到一个结构。它试图找到的结构形式是INTEGER PLUS INTEGER。在它确认了这个结构之后，它通过添加两个INTEGER token 值来解释输入的结构，因为此时解释器很清楚，它需要做的是添加两个整数，3 和 5。
 
 Congratulate yourself. You’ve just learned how to build your very first interpreter!
 
+祝贺你，你已经完成了你的第一个解释器。
+
 Now it’s time for exercises.
+
+是时候做一些练习了。
 
 ![](../img/lsbasi_exercises2.png)
 
 You didn’t think you would just read this article and that would be enough, did you? Okay, get your hands dirty and do the following exercises:
 
+你不会认为仅仅阅读这篇文章就足够掌握了吧？你需要动手实践一下下面的练习：
+
 1. Modify the code to allow multiple-digit integers in the input, for example “12+3”
-2. Add a method that skips whitespace characters so that your calculator can handle inputs with whitespace characters like ” 12 + 3”
+
+修改代码，允许多位整数输入，例如 “12+3”。
+
+2. Add a method that skips whitespace characters so that your calculator can handle inputs with whitespace characters like ”12 + 3”
+
+增加可以跳过空格字符的函数，你的计算可以处理输入中包含空格的情况，例如“12 + 3”
+
 3. Modify the code and instead of ‘+’ handle ‘-‘ to evaluate subtractions like “7-5”
+
+修改代码，使其支持减法运算，例如 “7-5”。
 
 Check your understanding
 
+检查你的理解
+
 1. What is an interpreter?
+
+什么是解释器？
+
 2. What is a compiler?
+
+什么是编译器？
+
 3. What’s the difference between an interpreter and a compiler?
+
+解释器和编译器有什么不同？
+
 4. What is a token?
+
+什么是 token ？
+
+
 5. What is the name of the process that breaks input apart into tokens?
+
+将输入分解成 tokens 的流程被称为什么？
+
 6. What is the part of the interpreter that does lexical analysis called?
+
+解释器做词法分析的部分叫做什么？
+
 7. What are the other common names for that part of an interpreter or a compiler?
+
+在解释器和编译器中，对于词法分析部分还有哪些常用的名字。
 
 Before I finish this article, I really want you to commit to studying interpreters and compilers. And I want you to do it right now. Don’t put it on the back burner. Don’t wait. If you’ve skimmed the article, start over. If you’ve read it carefully but haven’t done exercises - do them now. If you’ve done only some of them, finish the rest. You get the idea. And you know what? Sign the commitment pledge to start learning about interpreters and compilers today! 
 
+读完本文之前，我真的希望你可以努力的学习解释器和编译器。希望你现在就去做。不要把它放在后面。不要等。如果你略读这篇文章，重新开始看。如果你仔细看但还没有开始练习，现在开始练习。如果你只是完成了一部分，那么把剩下的完成。你理解了思想，但是你知道为什么吗？签署承诺书吧，今天就开始学习解释器和编译器! 
 
-I, ________, of being sound mind and body, do hereby pledge to commit to studying interpreters and compilers starting today and get to a point where I know 100% how they work!
+> I, ________, of being sound mind and body, do hereby pledge to commit to studying interpreters and compilers starting today and get to a point where I know 100% how they work!
+> Signature:
+> Date:
 
-Signature:
 
-Date:
+> 本人, ________, 作为一个身心健全的人， 在此承诺，从今天开始，我将致力于研究解释器和编译器，并达到100%知道它们是如何工作的程度。
+> 签字：
+> 日期：
+
 
 ![](../img/lsbasi_part1_commitment_pledge.png)
 
 Sign it, date it, and put it somewhere where you can see it every day to make sure that you stick to your commitment. And keep in mind the definition of commitment:
 
+签署它，日期，并把它放在某个地方，你可以看到它的每一天，以确保你坚持你的承诺。并牢记承诺的定义。
+
 > “Commitment is doing the thing you said you were going to do long after the mood you said it in has left you.” — Darren Hardy
 
 Okay, that’s it for today. In the next article of the mini series you will extend your calculator to handle more arithmetic expressions. Stay tuned.
 
+好了，今天就到这里。在下一篇迷你系列的文章中，你将扩展你的计算器来处理更多的算术表达式。敬请期待。
+
 If you can’t wait for the second article and are chomping at the bit to start digging deeper into interpreters and compilers, here is a list of books I recommend that will help you along the way:
 
-1. Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)
+如果你等不及第二篇文章，正在咬牙切齿地开始深入研究解释器和编译器，这里有一份我推荐的书单，会对你的学习有所帮助。
 
-2. Writing Compilers and Interpreters: A Software Engineering Approach
+1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
 
-3. Modern Compiler Implementation in Java
+2. [Writing Compilers and Interpreters: A Software Engineering Approach](https://www.amazon.com/gp/product/0470177071/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0470177071&linkCode=as2&tag=russblo0b-20&linkId=UCLGQTPIYSWYKRRM)
 
-4. Modern Compiler Design
+3. [Modern Compiler Implementation in Java](https://www.amazon.com/gp/product/052182060X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=052182060X&linkCode=as2&tag=russblo0b-20&linkId=ZSKKZMV7YWR22NMW)
 
-5. Compilers: Principles, Techniques, and Tools (2nd Edition)
+4. [Modern Compiler Design](https://www.amazon.com/gp/product/1461446988/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1461446988&linkCode=as2&tag=russblo0b-20&linkId=PAXWJP5WCPZ7RKRD)
 
-
-
+5. [Compilers: Principles, Techniques, and Tools (2nd Edition)](https://www.amazon.com/gp/product/0321486811/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0321486811&linkCode=as2&tag=russblo0b-20&linkId=GOEGDQG4HIHU56FQ)
