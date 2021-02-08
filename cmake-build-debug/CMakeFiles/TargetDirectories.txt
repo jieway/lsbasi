@@ -1,3 +1,0 @@
-F:/C-interpreter/cmake-build-debug/CMakeFiles/C_interpreter.dir
-F:/C-interpreter/cmake-build-debug/CMakeFiles/edit_cache.dir
-F:/C-interpreter/cmake-build-debug/CMakeFiles/rebuild_cache.dir
