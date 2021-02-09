@@ -1,7 +1,7 @@
 # Token 类型
 #
 # EOF (end-of-file) 输入结束的标志
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, PLUS, EOF, MINUS = 'INTEGER', 'PLUS', 'EOF', 'MINUS'
 
 
 class Token(object):
@@ -74,6 +74,11 @@ class Interpreter(object):
             self.pos += 1
             return token
 
+        if current_char == '-':
+            token = Token(MINUS, current_char)
+            self.pos += 1
+            return token
+
         self.error()
 
     def eat(self, token_type):
@@ -87,7 +92,11 @@ class Interpreter(object):
             self.error()
 
     def expr(self):
-        """expr -> INTEGER PLUS INTEGER"""
+        """expr -> INTEGER PLUS INTEGER
+
+        expr -> INTEGER PLUS INTEGER
+        expr -> INTEGER MINUS INTEGER
+        """
         # 将输入的第一个 token 设置为当前的 token 。
         self.current_token = self.get_next_token()
 
@@ -97,7 +106,10 @@ class Interpreter(object):
 
         # 当前的 token 是一个 “+” 号。
         op = self.current_token
-        self.eat(PLUS)
+        if op.type == PLUS:
+            self.eat(PLUS)
+        else:
+            self.eat(MINUS)
 
         # 当前的 token 是一个一位数的整数。
         right = self.current_token
@@ -108,7 +120,10 @@ class Interpreter(object):
         # 此时，整数加整数的 token 序列已经成功的被识别到，
         # 该方法可以成功返回两个整数相加后的结果，
         # 从而有效的解释输入。
-        result = left.value + right.value
+        if op.type == PLUS:
+            result = left.value + right.value
+        else:
+            result = left.value - right.value
         return result
 
 
