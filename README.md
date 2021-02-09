@@ -8,9 +8,7 @@
 
 为了更好的可视化，我决定采用 [gitmoji](https://gitmoji.dev/) 来标记 commit 。
 
-[git-emoji-guide 中文参考](https://github.com/hooj0/git-emoji-guide)
-
-改项目中经常使用的 emoji 如下：
+该项目中经常使用的 emoji 如下，此处有一个完整的中文翻译。[git-emoji-guide 中文参考](https://github.com/hooj0/git-emoji-guide)
 
 * :sparkles: 引入新功能。
 * :memo: 更行文档。
