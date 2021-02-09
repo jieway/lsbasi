@@ -197,7 +197,7 @@ flow for arithmetic expressions.
 
 你可以看到，expr首先调用术语方法。那么expr方法有一个while循环，可以执行零次或多次。
 而在循环里面，解析器会根据token（是加号还是减号）做出选择。
-花点时间证明，上面的代码确实遵循了算术表达式的语法图流程。
+花点时间证明上面的代码确实遵循了算术表达式的语法图流程。
 
 The parser itself does not interpret anything though:
  if it recognizes an expression it’s silent and if it doesn’t, 

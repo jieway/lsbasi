@@ -97,39 +97,29 @@ class Interpreter(object):
         else:
             self.error()
 
-    def expr(self):
-        """expr -> INTEGER PLUS INTEGER
+    def term(self):
+        """返回一个 INTEGER token 的值"""
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
 
-        expr -> INTEGER PLUS INTEGER
-        expr -> INTEGER MINUS INTEGER
-        """
+    def expr(self):
+        """Parser / Interpreter """
         # 将输入的第一个 token 设置为当前的 token 。
         self.current_token = self.get_next_token()
 
         # 当前的 token 是一个一位数的整数。
-        left = self.current_token
-        self.eat(INTEGER)
+        result = self.term()
 
-        # 当前的 token 是一个 “+” 号。
-        op = self.current_token
-        if op.type == PLUS:
-            self.eat(PLUS)
-        else:
-            self.eat(MINUS)
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result += self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result -= self.term()
 
-        # 当前的 token 是一个一位数的整数。
-        right = self.current_token
-        self.eat(INTEGER)
-        # 上述内容被调用后，
-        # self.current_token 被设置为 EOF token
-
-        # 此时，整数加整数的 token 序列已经成功的被识别到，
-        # 该方法可以成功返回两个整数相加后的结果，
-        # 从而有效的解释输入。
-        if op.type == PLUS:
-            result = left.value + right.value
-        else:
-            result = left.value - right.value
         return result
 
 
