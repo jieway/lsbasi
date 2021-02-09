@@ -447,6 +447,8 @@ here they are, as promised :)
 
 记得我在文章开头提到的那些练习：在这里，他们如约而至 :)
 
+![](../img/lsbasi_part3_exercises.png)
+
 * Draw a syntax diagram for arithmetic expressions that contain only multiplication and division, for example “7 * 4 / 2 * 3”. Seriously, just grab a pen or a pencil and try to draw one.
 
 为只包含乘法和除法的算术表达式画一个语法图，例如 "7 * 4 / 2 * 3"。说真的，拿起笔或铅笔试着画一个吧。
