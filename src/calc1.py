@@ -55,13 +55,17 @@ class Interpreter(object):
         # 获取当前位置的字符串，基于当前的单个字符来创建 Token
         current_char = text[self.pos]
 
+        # 扫描到空格了，直接略过。
+        while True:
+            if current_char == ' ':
+                self.pos += 1
+                # 需要重置当前字符，因为略过了。
+                current_char = text[self.pos]
+                continue
+            break
+
         # 如果当前字符是数字，那么将其转换为整数，创建 INTEGER token
         # 然后 self.pos 索引自增，指向下一个字符，并返回创建好的 token。
-        if current_char == ' ':
-            self.pos += 1
-
-        current_char = text[self.pos]
-
         if current_char.isdigit():
             token = Token(INTEGER, int(current_char))
             self.pos += 1
