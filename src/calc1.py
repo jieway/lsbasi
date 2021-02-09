@@ -56,13 +56,11 @@ class Interpreter(object):
         current_char = text[self.pos]
 
         # 扫描到空格了，直接略过。
-        while True:
-            if current_char == ' ':
-                self.pos += 1
-                # 需要重置当前字符，因为略过了。
-                current_char = text[self.pos]
-                continue
-            break
+        # 改成循环是因为存在多个空格的情况。
+        while current_char == ' ':
+            self.pos += 1
+            # 需要重置当前字符，因为略过了。
+            current_char = text[self.pos]
 
         # 如果当前字符是数字，那么将其转换为整数，创建 INTEGER token
         # 然后 self.pos 索引自增，指向下一个字符，并返回创建好的 token。
