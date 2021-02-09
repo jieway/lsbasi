@@ -35,9 +35,30 @@ class Interpreter(object):
         self.pos = 0
         # 当前的 Token
         self.current_token = None
+        self.current_char = self.text[self.pos]
 
     def error(self):
         raise Exception('Error parsing input')
+
+    def advance(self):
+        """修改 pos 的指向，并设置 current_char """
+        self.pos += 1
+        if self.pos > len(self.text) - 1:
+            self.current_char = None
+        else:
+            self.current_char = self.text[self.pos]
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def integer(self):
+        """Return a (multidigit) integer consumed from the input."""
+        result = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+        return int(result)
 
     def get_next_token(self):
         """词法分析器（也叫扫描器或者标记器）
@@ -45,41 +66,26 @@ class Interpreter(object):
         这个方法负责将句子拆分成 Token
         一次一个 Token 。
         """
-        text = self.text
+        while self.current_char is not None:
 
-        # 如果 self.pos 索引到了 self.text 的末尾
-        # 返回 EOF 表示输入字符均被转换成了 Tokens
-        if self.pos > len(text) - 1:
-            return Token(EOF, None)
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
 
-        # 获取当前位置的字符串，基于当前的单个字符来创建 Token
-        current_char = text[self.pos]
+            if self.current_char.isdigit():
+                return Token(INTEGER, self.integer())
 
-        # 扫描到空格了，直接略过。
-        # 改成循环是因为存在多个空格的情况。
-        while current_char == ' ':
-            self.pos += 1
-            # 需要重置当前字符，因为略过了。
-            current_char = text[self.pos]
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS, '+')
 
-        # 如果当前字符是数字，那么将其转换为整数，创建 INTEGER token
-        # 然后 self.pos 索引自增，指向下一个字符，并返回创建好的 token。
-        if current_char.isdigit():
-            token = Token(INTEGER, int(current_char))
-            self.pos += 1
-            return token
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS, '-')
 
-        if current_char == '+':
-            token = Token(PLUS, current_char)
-            self.pos += 1
-            return token
+            self.error()
 
-        if current_char == '-':
-            token = Token(MINUS, current_char)
-            self.pos += 1
-            return token
-
-        self.error()
+        return Token(EOF, None)
 
     def eat(self, token_type):
         # 比较当前的 token 类型和已经扫描过的 token 类型，
