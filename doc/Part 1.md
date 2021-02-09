@@ -433,11 +433,30 @@ If you can’t wait for the second article and are chomping at the bit to start 
 如果你等不及第二篇文章，正在咬牙切齿地开始深入研究解释器和编译器，这里有一份我推荐的书单，会对你的学习有所帮助。
 
 1. [Language Implementation Patterns: Create Your Own Domain-Specific and General Programming Languages (Pragmatic Programmers)](http://www.amazon.com/gp/product/193435645X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=193435645X&linkCode=as2&tag=russblo0b-20&linkId=MP4DCXDV6DJMEJBL)
-
 2. [Writing Compilers and Interpreters: A Software Engineering Approach](https://www.amazon.com/gp/product/0470177071/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0470177071&linkCode=as2&tag=russblo0b-20&linkId=UCLGQTPIYSWYKRRM)
-
 3. [Modern Compiler Implementation in Java](https://www.amazon.com/gp/product/052182060X/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=052182060X&linkCode=as2&tag=russblo0b-20&linkId=ZSKKZMV7YWR22NMW)
-
 4. [Modern Compiler Design](https://www.amazon.com/gp/product/1461446988/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=1461446988&linkCode=as2&tag=russblo0b-20&linkId=PAXWJP5WCPZ7RKRD)
-
 5. [Compilers: Principles, Techniques, and Tools (2nd Edition)](https://www.amazon.com/gp/product/0321486811/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=0321486811&linkCode=as2&tag=russblo0b-20&linkId=GOEGDQG4HIHU56FQ)
+
+
+> 译者注：对于初学者来说略过空格和减法是很简单的，多位整数的支持有难度！想不出来就直接看下一章吧。
+
+下面是我的一些 commit 历史，里面有一些思考。
+如果直接照着修改，改完后就变成 Part 2 版本的代码了。
+想不出来建议直接阅读 Part 2 。 
+
+空格支持：
+
+https://github.com/weijiew/lsbasi/commit/23f6b29ea8ec4048eeda170e5f504569759f0b7b
+
+https://github.com/weijiew/lsbasi/commit/7cebb7f0aa1fc23f8b8d14c1411ca3229e61a8f9
+
+https://github.com/weijiew/lsbasi/commit/d1690807d61e3fc94ee95f997ea4f24fa231dbf7
+
+减法支持：
+
+https://github.com/weijiew/lsbasi/commit/818bb79b498acdc50704fb6a8707b9632850ed5d
+
+多位整数的支持：
+
+https://github.com/weijiew/lsbasi/commit/1ceb643c8e794fb0156444c169f76f5b2d190b43

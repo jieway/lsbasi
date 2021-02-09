@@ -53,7 +53,7 @@ class Interpreter(object):
             self.advance()
 
     def integer(self):
-        """Return a (multidigit) integer consumed from the input."""
+        """根据输入返回一个多位整数"""
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
