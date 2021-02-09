@@ -37,6 +37,9 @@ class Interpreter(object):
         self.current_token = None
         self.current_char = self.text[self.pos]
 
+    ##########################################################
+    # Lexer code                                             #
+    ##########################################################
     def error(self):
         raise Exception('Error parsing input')
 
@@ -87,6 +90,9 @@ class Interpreter(object):
 
         return Token(EOF, None)
 
+    ##########################################################
+    # Parser / Interpreter code                              #
+    ##########################################################
     def eat(self, token_type):
         # 比较当前的 token 类型和已经扫描过的 token 类型，
         # 如果二者类型一致，那么 "eat" 当前的 token 。
