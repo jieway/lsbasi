@@ -1,7 +1,7 @@
 # Token 类型
 #
 # EOF (end-of-file) 输入结束的标志
-INTEGER, PLUS, EOF, MINUS = 'INTEGER', 'PLUS', 'EOF', 'MINUS'
+INTEGER, EOF, DIV, MUL = 'INTEGER', 'EOF', 'DIV', 'MUL'
 
 
 class Token(object):
@@ -75,13 +75,13 @@ class Interpreter(object):
             if self.current_char.isdigit():
                 return Token(INTEGER, self.integer())
 
-            if self.current_char == '+':
+            if self.current_char == '*':
                 self.advance()
-                return Token(PLUS, '+')
+                return Token(MUL, '*')
 
-            if self.current_char == '-':
+            if self.current_char == '/':
                 self.advance()
-                return Token(MINUS, '-')
+                return Token(DIV, '/')
 
             self.error()
 
@@ -111,14 +111,14 @@ class Interpreter(object):
         # 当前的 token 是一个一位数的整数。
         result = self.term()
 
-        while self.current_token.type in (PLUS, MINUS):
+        while self.current_token.type in (MUL, DIV):
             token = self.current_token
-            if token.type == PLUS:
-                self.eat(PLUS)
-                result += self.term()
-            elif token.type == MINUS:
-                self.eat(MINUS)
-                result -= self.term()
+            if token.type == MUL:
+                self.eat(MUL)
+                result += result * self.term()
+            elif token.type == DIV:
+                self.eat(DIV)
+                result += result // self.term()
 
         return result
 

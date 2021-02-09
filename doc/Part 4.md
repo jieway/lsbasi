@@ -1,6 +1,10 @@
-Have you been passively learning the material in these articles or have you been actively practicing it? I hope you’ve been actively practicing it. I really do :)
+Have you been passively learning the material in these articles 
+or have you been actively practicing it? I hope you’ve been actively 
+practicing it. I really do :)
 
 Remember what Confucius said?
+
+还记得孔子说过什么吗？
 
 > “I hear and I forget.”
 
@@ -14,15 +18,42 @@ Remember what Confucius said?
 
 ![](../img/LSBAWS_confucius_do.png)
 
-In the previous article you learned how to parse (recognize) and interpret arithmetic expressions with any number of plus or minus operators in them, for example “7 - 3 + 2 - 1”. You also learned about syntax diagrams and how they can be used to specify the syntax of a programming language.
+> 译者注：以上这段内容其实是荀子说的，“不闻不若闻之，闻之若不见之，见之不若知之，知之不若行之。”
 
-Today you’re going to learn how to parse and interpret arithmetic expressions with any number of multiplication and division operators in them, for example “7 * 4 / 2 * 3”. The division in this article will be an integer division, so if the expression is “9 / 4”, then the answer will be an integer: 2.
+In the previous article you learned how to parse (recognize) 
+and interpret arithmetic expressions with any number of plus 
+or minus operators in them, for example “7 - 3 + 2 - 1”. 
+You also learned about syntax diagrams and how they can be used to specify the syntax of a programming language.
 
-I will also talk quite a bit today about another widely used notation for specifying the syntax of a programming language. It’s called context-free grammars (grammars, for short) or BNF (Backus-Naur Form). For the purpose of this article I will not use pure BNF notation but more like a modified EBNF notation.
+在上一篇文章中，你学会了如何解析（识别）和解释含有任意数量加减运算符的算术表达式，例如 "7 - 3 + 2 - 1"。
+你还学习了语法图，以及如何使用它们来指定编程语言的语法。
+
+Today you’re going to learn how to parse and interpret arithmetic 
+expressions with any number of multiplication and division operators 
+in them, for example “7 * 4 / 2 * 3”. The division in this article 
+will be an integer division, so if the expression is “9 / 4”, then the 
+answer will be an integer: 2.
+
+今天你将学习如何解析和解释含有任意数量乘法和除法运算符的算术表达式，例如 "7 * 4 / 2 * 3"。
+本文中的除法将是整数除法，所以如果表达式是 "9 / 4"，那么答案将是一个整数：2。
+
+I will also talk quite a bit today about another widely used notation 
+for specifying the syntax of a programming language. It’s called context-free 
+grammars (grammars, for short) or BNF (Backus-Naur Form). For the purpose of 
+this article I will not use pure BNF notation but more like a modified EBNF notation.
+
+今天我还会讲不少关于另一种广泛使用的用于指定编程语言语法的符号。
+它叫做上下文无关文法（grammars，简称grammars）或BNF（Backus-Naur Form）。
+在本文中，我不会使用纯粹的BNF符号，而更像是一种改良的EBNF符号。
 
 Here are a couple of reasons to use grammars:
 
+这里有几个使用语法的理由。
+
 1. A grammar specifies the syntax of a programming language in a concise manner. Unlike syntax diagrams, grammars are very compact. You will see me using grammars more and more in future articles.
+
+
+
 2. A grammar can serve as great documentation.
 3. A grammar is a good starting point even if you manually write your parser from scratch. Quite often you can just convert the grammar to code by following a set of simple rules.
 4. There is a set of tools, called parser generators, which accept a grammar as an input and automatically generate a parser for you based on that grammar. I will talk about those tools later on in the series.
