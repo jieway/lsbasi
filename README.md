@@ -13,6 +13,4 @@
 该项目中经常使用的 emoji 如下，此处有一个完整的中文翻译。[git-emoji-guide 中文参考](https://github.com/hooj0/git-emoji-guide)
 
 * :sparkles: 引入新功能。
-* :memo: 更行文档。
 * :bug: 解决 bug 。
-* :pencil2: 修改笔误。

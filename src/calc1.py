@@ -1,7 +1,8 @@
 # Token 类型
 #
 # EOF (end-of-file) 输入结束的标志
-INTEGER, EOF, DIV, MUL = 'INTEGER', 'EOF', 'DIV', 'MUL'
+INTEGER, EOF, DIV, MUL, PLUS, MINUS = (
+    'INTEGER', 'EOF', 'DIV', 'MUL', 'PLUS', 'MINUS')
 
 
 class Token(object):
@@ -26,25 +27,16 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-
-class Interpreter(object):
+class Lexer(object):
     def __init__(self, text):
-        # 要解释的内容，源代码，例如："3+5"
         self.text = text
-        # self.pos 表示指向当前字符的位置。
         self.pos = 0
-        # 当前的 Token
-        self.current_token = None
         self.current_char = self.text[self.pos]
 
-    ##########################################################
-    # Lexer code                                             #
-    ##########################################################
     def error(self):
-        raise Exception('Error parsing input')
+        raise Exception("Invalid character")
 
     def advance(self):
-        """修改 pos 的指向，并设置 current_char """
         self.pos += 1
         if self.pos > len(self.text) - 1:
             self.current_char = None
@@ -56,7 +48,6 @@ class Interpreter(object):
             self.advance()
 
     def integer(self):
-        """根据输入返回一个多位整数"""
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
@@ -78,6 +69,14 @@ class Interpreter(object):
             if self.current_char.isdigit():
                 return Token(INTEGER, self.integer())
 
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS, '+')
+
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS, '-')
+
             if self.current_char == '*':
                 self.advance()
                 return Token(MUL, '*')
@@ -90,41 +89,66 @@ class Interpreter(object):
 
         return Token(EOF, None)
 
-    ##########################################################
-    # Parser / Interpreter code                              #
-    ##########################################################
+
+class Interpreter(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()
+
+    def error(self):
+        raise Exception('Invalid syntax')
+
     def eat(self, token_type):
         # 比较当前的 token 类型和已经扫描过的 token 类型，
         # 如果二者类型一致，那么 "eat" 当前的 token 。
         # 并下一个 token 赋给当前 token 。
         # 否则返回 token 。
         if self.current_token.type == token_type:
-            self.current_token = self.get_next_token()
+            self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
-    def term(self):
-        """返回一个 INTEGER token 的值"""
+    def factor(self):
         token = self.current_token
         self.eat(INTEGER)
         return token.value
 
-    def expr(self):
-        """Parser / Interpreter """
-        # 将输入的第一个 token 设置为当前的 token 。
-        self.current_token = self.get_next_token()
+    def term(self):
+        """先处理乘除 """
 
-        # 当前的 token 是一个一位数的整数。
-        result = self.term()
+        result = self.factor()
 
         while self.current_token.type in (MUL, DIV):
             token = self.current_token
             if token.type == MUL:
                 self.eat(MUL)
-                result += result * self.term()
+                result = result * self.factor()
             elif token.type == DIV:
                 self.eat(DIV)
-                result += result // self.term()
+                result = result / self.factor()
+
+        return result
+
+
+    def expr(self):
+        """
+        calc>  14 + 2 * 3 - 6 / 2
+        17
+
+        expr   : term ((PLUS | MINUS) term)*
+        term   : factor ((MUL | DIV) factor)*
+        factor : INTEGER
+        """
+        result = self.term()
+
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result = result + self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result = result - self.term()
 
         return result
 
@@ -139,7 +163,8 @@ def main():
             break
         if not text:
             continue
-        interpreter = Interpreter(text)
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
         result = interpreter.expr()
         print(result)
 
