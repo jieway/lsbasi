@@ -1,8 +1,9 @@
 # Token 类型
 #
 # EOF (end-of-file) 输入结束的标志
-INTEGER, EOF, DIV, MUL, PLUS, MINUS = (
-    'INTEGER', 'EOF', 'DIV', 'MUL', 'PLUS', 'MINUS')
+INTEGER, EOF, DIV, MUL, PLUS, MINUS, LPAREN, RPAREN = (
+    'INTEGER', 'EOF', 'DIV', 'MUL', 'PLUS', 'MINUS', 'LPAREN', 'RPAREN'
+)
 
 
 class Token(object):
@@ -85,6 +86,14 @@ class Lexer(object):
                 self.advance()
                 return Token(DIV, '/')
 
+            if self.current_char == '(':
+                self.advance()
+                return Token(LPAREN, '(')
+
+            if self.current_char == ')':
+                self.advance()
+                return Token(RPAREN, ')')
+
             self.error()
 
         return Token(EOF, None)
@@ -110,12 +119,17 @@ class Interpreter(object):
 
     def factor(self):
         token = self.current_token
-        self.eat(INTEGER)
-        return token.value
+        if token.type == INTEGER:
+            self.eat(INTEGER)
+            return token.value
+        elif token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
 
     def term(self):
-        """先处理乘除 """
-
+        """term : factor ((MUL | DIV) factor)*"""
         result = self.factor()
 
         while self.current_token.type in (MUL, DIV):
@@ -131,13 +145,14 @@ class Interpreter(object):
 
 
     def expr(self):
-        """
-        calc>  14 + 2 * 3 - 6 / 2
-        17
+        """Arithmetic expression parser / interpreter.
+
+        calc> 7 + 3 * (10 / (12 / (3 + 1) - 1))
+        22
 
         expr   : term ((PLUS | MINUS) term)*
         term   : factor ((MUL | DIV) factor)*
-        factor : INTEGER
+        factor : INTEGER | LPAREN expr RPAREN
         """
         result = self.term()
 
