@@ -96,7 +96,7 @@ class Interpreter(object):
 
 def main():
     while True:
-        text = input("calc2 > ")
+        text = input("calc3 > ")
         interpreter = Interpreter(text)
         result = interpreter.expr()
         print(result)
