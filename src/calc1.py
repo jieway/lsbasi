@@ -25,6 +25,7 @@ class Token(object):
             value=repr(self.value)
         )
 
+
     def __repr__(self):
         return self.__str__()
 
