@@ -127,14 +127,15 @@ class Parser(object):
 
     def factor(self):
         """factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN"""
-
         token = self.current_token
         if token.type == PLUS:
             self.eat(PLUS)
-            return UnaryOp(token, self.factor)
+            node = UnaryOp(token, self.factor())
+            return node
         elif token.type == MINUS:
             self.eat(MINUS)
-            return UnaryOp(token, self.factor)
+            node = UnaryOp(token, self.factor())
+            return node
         elif token.type == INTEGER:
             self.eat(INTEGER)
             return Num(token)
@@ -156,13 +157,14 @@ class Parser(object):
                 self.eat(DIV)
 
             node = BinOp(left=node, op=token, right=self.factor())
+
         return node
 
     def expr(self):
         """
         expr   : term ((PLUS | MINUS) term)*
         term   : factor ((MUL | DIV) factor)*
-        factor : INTEGER | LPAREN expr RPAREN
+        factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
         """
         node = self.term()
 
@@ -178,7 +180,10 @@ class Parser(object):
         return node
 
     def parse(self):
-        return self.expr()
+        node = self.expr()
+        if self.current_token.type != EOF:
+            self.error()
+        return node
 
 ###############################################################################
 #                                                                             #
@@ -208,7 +213,7 @@ class Interpreter(NodeVisitor):
         elif node.op.type == MUL:
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == DIV:
-            return self.visit(node.left) / self.visit(node.right)
+            return self.visit(node.left) // self.visit(node.right)
 
     def visit_Num(self, node):
         return node.value
@@ -222,6 +227,8 @@ class Interpreter(NodeVisitor):
 
     def interpret(self):
         tree = self.parser.parse()
+        if tree is None:
+            return ''
         return self.visit(tree)
 
 def main():
