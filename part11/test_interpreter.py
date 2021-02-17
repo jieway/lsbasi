@@ -128,6 +128,7 @@ VAR
    number : INTEGER;
    a, b   : INTEGER;
    y      : REAL;
+
 BEGIN {Part11}
    number := 2;
    a := number ;

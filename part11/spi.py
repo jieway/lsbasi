@@ -1,3 +1,4 @@
+from collections import OrderedDict
 
 INTEGER       = 'INTEGER'
 REAL          = 'REAL'
@@ -84,18 +85,18 @@ class Lexer(object):
         else:
             return self.text[peek_pos]
 
-    def skip_comment(self):
-        """处理注释，直到遇到 } 结束"""
-        while self.current_char != '}':
-            self.advance()
-        self.advance()
-
     def skip_whitespace(self):
         """跳过或空格，利用 advance 来推进。
         同时进行边界判断，防止越界！
         """
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
+
+    def skip_comment(self):
+        """处理注释，直到遇到 } 结束"""
+        while self.current_char != '}':
+            self.advance()
+        self.advance()
 
     def number(self):
         """处理实数，也就是整数和浮点数。
@@ -114,8 +115,8 @@ class Lexer(object):
             self.advance()
 
             while (
-                    self.current_char is not None and
-                    self.current_char.isdigit()
+                self.current_char is not None and
+                self.current_char.isdigit()
             ):
                 result += self.current_char
                 self.advance()
@@ -145,38 +146,30 @@ class Lexer(object):
 
         while self.current_char is not None:
 
-            # 处理空格
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
 
-            # 处理注释
             if self.current_char == '{':
                 self.advance()
                 self.skip_comment()
                 continue
 
-            # 处理保留字
             if self.current_char.isalpha():
                 return self._id()
 
-            # 处理多位整数
             if self.current_char.isdigit():
                 return self.number()
 
-            # 处理赋值符号 :=
             if self.current_char == ':' and self.peek() == '=':
                 self.advance()
                 self.advance()
                 return Token(ASSIGN, ':=')
 
-            # 处理分号，代码块的结束
             if self.current_char == ';':
                 self.advance()
                 return Token(SEMI, ';')
 
-            # 处理 : 用于声明变量
-            # 例如 number : INTEGER;
             if self.current_char == ':':
                 self.advance()
                 return Token(COLON, ':')
@@ -315,7 +308,6 @@ class Parser(object):
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
 
-
     def error(self):
         raise Exception('Invalid syntax')
 
@@ -324,6 +316,17 @@ class Parser(object):
             self.current_token = self.lexer.get_next_token()
         else:
             self.error()
+
+    def program(self):
+        """program : PROGRAM variable SEMI block DOT"""
+        self.eat(PROGRAM)
+        var_node = self.variable()
+        prog_name = var_node.value
+        self.eat(SEMI)
+        block_node = self.block()
+        program_node = Program(prog_name, block_node)
+        self.eat(DOT)
+        return program_node
 
     def block(self):
         """block : declarations compound_statement"""
@@ -377,17 +380,6 @@ class Parser(object):
         node = Type(token)
         return node
 
-    def program(self):
-        """program : PROGRAM variable SEMI block DOT"""
-        self.eat(PROGRAM)
-        var_node = self.variable()
-        prog_name = var_node.value
-        self.eat(SEMI)
-        block_node = self.block()
-        program_node = Program(prog_name, block_node)
-        self.eat(DOT)
-        return program_node
-
     def compound_statement(self):
         """
         compound_statement: BEGIN statement_list END
@@ -407,7 +399,6 @@ class Parser(object):
         statement_list : statement
                        | statement SEMI statement_list
         """
-
         node = self.statement()
 
         results = [node]
@@ -415,9 +406,6 @@ class Parser(object):
         while self.current_token.type == SEMI:
             self.eat(SEMI)
             results.append(self.statement())
-
-        if self.current_token.type == ID:
-            self.error()
 
         return results
 
@@ -433,7 +421,6 @@ class Parser(object):
             node = self.assignment_statement()
         else:
             node = self.empty()
-
         return node
 
     def assignment_statement(self):
@@ -501,7 +488,6 @@ class Parser(object):
                   | LPAREN expr RPAREN
                   | variable
         """
-
         token = self.current_token
         if token.type == PLUS:
             self.eat(PLUS)
@@ -529,27 +515,40 @@ class Parser(object):
     def parse(self):
         """
         program : PROGRAM variable SEMI block DOT
+
         block : declarations compound_statement
+
         declarations : VAR (variable_declaration SEMI)+
                      | empty
+
         variable_declaration : ID (COMMA ID)* COLON type_spec
-        type_spec : INTEGER | REAL
+
+        type_spec : INTEGER
+
         compound_statement : BEGIN statement_list END
+
         statement_list : statement
                        | statement SEMI statement_list
+
         statement : compound_statement
                   | assignment_statement
                   | empty
+
         assignment_statement : variable ASSIGN expr
+
         empty :
+
         expr : term ((PLUS | MINUS) term)*
+
         term : factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)*
+
         factor : PLUS factor
                | MINUS factor
                | INTEGER_CONST
                | REAL_CONST
                | LPAREN expr RPAREN
                | variable
+
         variable: ID
         """
         node = self.program()
@@ -561,7 +560,7 @@ class Parser(object):
 
 ###############################################################################
 #                                                                             #
-#  INTERPRETER                                                                #
+#  AST visitors (walkers)                                                     #
 #                                                                             #
 ###############################################################################
 
@@ -575,24 +574,149 @@ class NodeVisitor(object):
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
 
-class Interpreter(NodeVisitor):
+###############################################################################
+#                                                                             #
+#  SYMBOLS and SYMBOL TABLE                                                   #
+#                                                                             #
+###############################################################################
 
-    GLOBAL_SCOPE = {}
 
-    def __init__(self, parser):
-        self.parser = parser
+class Symbol(object):
+    """例如变量声明
+    x : INTEGER;
+    其中 x 是 name
+    INTEGER 是 type
+    """
+    def __init__(self, name, type=None):
+        self.name = name
+        self.type = type
+
+
+class VarSymbol(Symbol):
+    """
+    用于表示： x:INTEGER
+    int_type = BuiltinTypeSymbol('INTEGER')
+    var_x_symbol = VarSymbol('x', int_type)
+
+    real_type = BuiltinTypeSymbol('REAL')
+    var_y_symbol = VarSymbol('y', real_type)
+
+    name: x
+    type: INTEGER
+    """
+    def __init__(self, name, type):
+        super().__init__(name, type)
+
+    def __str__(self):
+        return '<{name}:{type}>'.format(name=self.name, type=self.type)
+
+    __repr__ = __str__
+
+
+class BuiltinTypeSymbol(Symbol):
+    """表示内置数据类型
+    例如：
+    name: INTEGER
+    name: REAL
+    """
+    def __init__(self, name):
+        super().__init__(name)
+
+    def __str__(self):
+        return self.name
+
+    __repr__ = __str__
+
+
+class SymbolTable(object):
+    def __init__(self):
+        self._symbols = {}
+        self._init_builtins()
+
+    def _init_builtins(self):
+        self.define(BuiltinTypeSymbol('INTEGER'))
+        self.define(BuiltinTypeSymbol('REAL'))
+
+    def __str__(self):
+        s = 'Symbols: {symbols}'.format(
+            symbols=[value for value in self._symbols.values()]
+        )
+        return s
+
+    __repr__ = __str__
+
+    def define(self, symbol):
+        print('Define: %s' % symbol)
+        self._symbols[symbol.name] = symbol
+
+    def lookup(self, name):
+        print('Lookup: %s' % name)
+        symbol = self._symbols.get(name)
+        return symbol
+
+
+class SymbolTableBuilder(NodeVisitor):
+    def __init__(self):
+        self.symtab = SymbolTable()
+
+    def visit_Block(self, node):
+        for declaration in node.declarations:
+            self.visit(declaration)
+        self.visit(node.compound_statement)
+
+    def visit_Program(self, node):
+        self.visit(node.block)
 
     def visit_BinOp(self, node):
-        if node.op.type == PLUS:
-            return self.visit(node.left) + self.visit(node.right)
-        elif node.op.type == MINUS:
-            return self.visit(node.left) - self.visit(node.right)
-        elif node.op.type == MUL:
-            return self.visit(node.left) * self.visit(node.right)
-        elif node.op.type == INTEGER_DIV:
-            return self.visit(node.left) // self.visit(node.right)
-        elif node.op.type == FLOAT_DIV:
-            return float(self.visit(node.left)) / float(self.visit(node.right))
+        self.visit(node.left)
+        self.visit(node.right)
+
+    def visit_Num(self, node):
+        pass
+
+    def visit_UnaryOp(self, node):
+        self.visit(node.expr)
+
+    def visit_Compound(self, node):
+        for child in node.children:
+            self.visit(child)
+
+    def visit_NoOp(self, node):
+        pass
+
+    def visit_VarDecl(self, node):
+        type_name = node.type_node.value
+        type_symbol = self.symtab.lookup(type_name)
+        var_name = node.var_node.value
+        var_symbol = VarSymbol(var_name, type_symbol)
+        self.symtab.define(var_symbol)
+
+    def visit_Assign(self, node):
+        var_name = node.left.value
+        var_symbol = self.symtab.lookup(var_name)
+        if var_symbol is None:
+            raise NameError(repr(var_name))
+
+        self.visit(node.right)
+
+    def visit_Var(self, node):
+        var_name = node.value
+        var_symbol = self.symtab.lookup(var_name)
+
+        if var_symbol is None:
+            raise NameError(repr(var_name))
+
+
+###############################################################################
+#                                                                             #
+#  INTERPRETER                                                                #
+#                                                                             #
+###############################################################################
+
+class Interpreter(NodeVisitor):
+    def __init__(self, tree):
+        self.tree = tree
+        self.GLOBAL_MEMORY = {}
 
     def visit_Program(self, node):
         self.visit(node.block)
@@ -607,6 +731,18 @@ class Interpreter(NodeVisitor):
 
     def visit_Type(self, node):
         pass
+
+    def visit_BinOp(self, node):
+        if node.op.type == PLUS:
+            return self.visit(node.left) + self.visit(node.right)
+        elif node.op.type == MINUS:
+            return self.visit(node.left) - self.visit(node.right)
+        elif node.op.type == MUL:
+            return self.visit(node.left) * self.visit(node.right)
+        elif node.op.type == INTEGER_DIV:
+            return self.visit(node.left) // self.visit(node.right)
+        elif node.op.type == FLOAT_DIV:
+            return float(self.visit(node.left)) / float(self.visit(node.right))
 
     def visit_Num(self, node):
         return node.value
@@ -628,21 +764,19 @@ class Interpreter(NodeVisitor):
         因为后续可能会用到
         """
         var_name = node.left.value
-        self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
+        var_value = self.visit(node.right)
+        self.GLOBAL_MEMORY[var_name] = var_value
 
     def visit_Var(self, node):
         var_name = node.value
-        val = self.GLOBAL_SCOPE.get(var_name)
-        if val is None:
-            raise NameError(repr(var_name))
-        else:
-            return val
+        var_value = self.GLOBAL_MEMORY.get(var_name)
+        return var_value
 
     def visit_NoOp(self, node):
         pass
 
     def interpret(self):
-        tree = self.parser.parse()
+        tree = self.tree
         if tree is None:
             return ''
         return self.visit(tree)
@@ -654,9 +788,20 @@ def main():
 
     lexer = Lexer(text)
     parser = Parser(lexer)
-    interpreter = Interpreter(parser)
+    tree = parser.parse()
+    symtab_builder = SymbolTableBuilder()
+    symtab_builder.visit(tree)
+    print('')
+    print('Symbol Table contents:')
+    print(symtab_builder.symtab)
+
+    interpreter = Interpreter(tree)
     result = interpreter.interpret()
-    print(interpreter.GLOBAL_SCOPE)
+
+    print('')
+    print('Run-time GLOBAL_MEMORY contents:')
+    for k, v in sorted(interpreter.GLOBAL_MEMORY.items()):
+        print('{} = {}'.format(k, v))
 
 
 if __name__ == '__main__':
