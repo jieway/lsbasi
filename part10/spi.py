@@ -606,7 +606,6 @@ class Interpreter(NodeVisitor):
         pass
 
     def visit_Type(self, node):
-        # Do nothing
         pass
 
     def visit_Num(self, node):

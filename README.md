@@ -10,8 +10,6 @@
 
 ## 🥳 提交
 
-为了更好的可视化，我决定采用 [gitmoji](https://gitmoji.dev/) 来标记 commit 。
-
 常用 emoji 含义如下：
 
 * :sparkles: 引入新功能。
