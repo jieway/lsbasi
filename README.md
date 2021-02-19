@@ -8,7 +8,7 @@
 
 顺便写了一个[踩坑记录](https://blog.weijiew.com/2021/02/22-lsbasi-summary/)，主要记录学习过程中遇到问题的解决方案以及一些心得体会。
 
-## 🥳 提交
+## 🥳 Commit
 
 常用 emoji 含义如下：
 
