@@ -4,7 +4,9 @@
 
 仓库名称 lsbasi 是 Let’s Build A Simple Interpreter 首字母缩写。
 
-原作者的 [repo](https://github.com/rspivak/lsbasi/) 。由于我想自己实现一遍，所以并没有直接 fork 原仓库。
+原作者的 [repo](https://github.com/rspivak/lsbasi/) 。由于我想自己实现一遍，所以并没有直接 fork 。
+
+顺便写了一个[踩坑记录](https://blog.weijiew.com/2021/02/22-lsbasi-summary/)，主要记录学习过程中遇到问题的解决方案以及一些心得体会。
 
 ## 🥳 提交
 
@@ -36,6 +38,8 @@
     - [x] 支持 Pascal 注释。
     - [x] 符号表。
     - [x] 支持函数。
+    - [x] 针对不定义就使用，重复定义情况的报错处理。
+    - [ ] 作用域。
     - [ ] 函数支持。
     - [ ] 函数调用。
     - [ ] 语义分析，例如类型检查。
