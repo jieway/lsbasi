@@ -4,6 +4,7 @@
 #  LEXER                                                                      #
 #                                                                             #
 ###############################################################################
+from collections import OrderedDict
 
 INTEGER       = 'INTEGER'
 REAL          = 'REAL'
@@ -310,11 +311,19 @@ class Type(AST):
         self.value = token.value
 
 
+class Param(AST):
+    """表示形参"""
+    def __init__(self, var_node, type_node):
+        self.var_node = var_node
+        self.type_node = type_node
+
+
 class ProcedureDecl(AST):
     """过程调用节点，也就是函数"""
-    def __init__(self, proc_name, block_node):
-        self.proc_name = proc_name
-        self.block_node = block_node
+    def __init__(self, proc_name, params, block_node):
+        self.proc_name = proc_name # 函数名
+        self.params = params # 函数形参
+        self.block_node = block_node # 函数体
 
 
 class Parser(object):
@@ -350,8 +359,8 @@ class Parser(object):
         return node
 
     def declarations(self):
-        """declarations : VAR (variable_declaration SEMI)+
-                        | (PROCEDURE ID SEMI block SEMI)*
+        """declarations : (VAR (variable_declaration SEMI)+)*
+                        | (PROCEDURE ID (LPAREN formal_parameter_list RPAREN)? SEMI block SEMI)*
                         | empty
         """
         declarations = []
@@ -368,15 +377,60 @@ class Parser(object):
                 self.eat(PROCEDURE)
                 proc_name = self.current_token.value
                 self.eat(ID)
+                params = []
+
+                if self.current_token.type == LPAREN:
+                    self.eat(LPAREN)
+
+                    params = self.formal_parameter_list()
+
+                    self.eat(RPAREN)
+
                 self.eat(SEMI)
                 block_node = self.block()
-                proc_decl = ProcedureDecl(proc_name, block_node)
+                proc_decl = ProcedureDecl(proc_name, params, block_node)
                 declarations.append(proc_decl)
                 self.eat(SEMI)
             else:
                 break
 
         return declarations
+
+    def formal_parameters(self):
+        """ formal_parameters : ID (COMMA ID)* COLON type_spec """
+        param_nodes = []
+
+        param_tokens = [self.current_token]
+        self.eat(ID)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            param_tokens.append(self.current_token)
+            self.eat(ID)
+
+        self.eat(COLON)
+        type_node = self.type_spec()
+
+        for param_token in param_tokens:
+            param_node = Param(Var(param_token), type_node)
+            param_nodes.append(param_node)
+
+        return param_nodes
+
+    def formal_parameter_list(self):
+        """ formal_parameter_list : formal_parameters
+                                  | formal_parameters SEMI formal_parameter_list
+        """
+        # procedure Foo();
+        if not self.current_token.type == ID:
+            return []
+
+        param_nodes = self.formal_parameters()
+
+        while self.current_token.type == SEMI:
+            self.eat(SEMI)
+            param_nodes.extend(self.formal_parameters())
+
+        return param_nodes
 
     def variable_declaration(self):
         """variable_declaration : ID (COMMA ID)* COLON type_spec"""
@@ -668,9 +722,29 @@ class BuiltinTypeSymbol(Symbol):
         )
 
 
-class SymbolTable(object):
-    def __init__(self):
+class ProcedureSymbol(Symbol):
+    """表示函数节点 Procedure symbols """
+    def __init__(self, name, params=None):
+        super().__init__(name)
+        self.params = params if params is not None else []
+
+    def __str__(self):
+        return '<{class_name}(name={name}, parameters={params})>'.format(
+            class_name=self.__class__.__name__,
+            name=self.name,
+            params=self.params,
+        )
+
+    __repr__ = __str__
+
+
+class ScopedSymbolTable(object):
+    """作用域符号表，之前只是单纯的符号表。"""
+    def __init__(self, scope_name, scope_level, enclosing_scope=None):
         self._symbols = {}
+        self.scope_name = scope_name
+        self.scope_level = scope_level
+        self.enclosing_scope = enclosing_scope
         self._init_builtins()
 
     def _init_builtins(self):
@@ -682,8 +756,15 @@ class SymbolTable(object):
         self.insert(BuiltinTypeSymbol('REAL'))
 
     def __str__(self):
-        symtab_header = 'Symbol table contents'
-        lines = ['\n', symtab_header, '_' * len(symtab_header)]
+        h1 = 'SCOPE (SCOPED SYMBOL TABLE)'
+        lines = ['\n', h1, '=' * len(h1)]
+        for header_name, header_value in (
+            ('Scope name', self.scope_name),
+            ('Scope level', self.scope_level),
+        ):
+            lines.append('%-15s: %s' % (header_name, header_value))
+        h2 = 'Scope (Scoped symbol table) contents'
+        lines.extend([h2, '-' * len(h2)])
         lines.extend(
             ('%7s: %r' % (key, value))
             for key, value in self._symbols.items()
@@ -698,24 +779,55 @@ class SymbolTable(object):
         print('Insert: %s' % symbol.name)
         self._symbols[symbol.name] = symbol
 
-    def lookup(self, name):
+    def lookup(self, name, current_scope_only=False):
         """根据名字查询符号表，如果没有就返回 None """
-        print('Lookup: %s' % name)
+        print('Lookup: %s. (Scope name: %s)' % (name, self.scope_name))
+        # 返回值要么是 Symbol 类，要么是 None
         symbol = self._symbols.get(name)
-        return symbol
 
+        if symbol is not None:
+            return symbol
+
+        # 到此处打住，限制住了不再递归搜索
+        if current_scope_only:
+            return None
+
+        # 如果当前表中没有，就递进到上一张符号表中查询直到顶层。
+        if self.enclosing_scope is not None:
+            return self.enclosing_scope.lookup(name)
 
 class SemanticAnalyzer(NodeVisitor):
+    """语义分析器，遍历 AST 树构建符号表并分析是否符合语义。"""
     def __init__(self):
-        self.symtab = SymbolTable()
+        self.current_scope = None
 
     def visit_Block(self, node):
+        """分为 declarations 和 compound_statement 两种类型 INTEGER
+        前者例如变量声明，
+        """
         for declaration in node.declarations:
             self.visit(declaration)
         self.visit(node.compound_statement)
 
     def visit_Program(self, node):
+        print('ENTER scope: global')
+        # 创建一个单独的符号表来记录当前作用域中的符号
+        global_scope = ScopedSymbolTable(
+            scope_name='global',
+            scope_level=1,
+            enclosing_scope=self.current_scope,  # None
+        )
+        # 更新当前作用域的符号表
+        self.current_scope = global_scope
+
+        # 遍历子树
         self.visit(node.block)
+
+        print(global_scope)
+
+        # 还原符号表
+        self.current_scope = self.current_scope.enclosing_scope
+        print('LEAVE scope: global')
 
     def visit_Compound(self, node):
         for child in node.children:
@@ -728,20 +840,57 @@ class SemanticAnalyzer(NodeVisitor):
         self.visit(node.left)
         self.visit(node.right)
 
+
+    def visit_ProcedureDecl(self, node):
+        """函数的处理逻辑
+        1. 拿到当前节点的名字存入上一级的符号表中。
+        2. 创建新的符号表，重置当前符号表。
+        3. 遍历形参并将其存入新建的符号表中。
+        """
+        proc_name = node.proc_name
+        proc_symbol = ProcedureSymbol(proc_name)
+        self.current_scope.insert(proc_symbol)
+
+        print('ENTER scope: %s' % proc_name)
+        # 创建新的符号表
+        procedure_scope = ScopedSymbolTable(
+            scope_name=proc_name,
+            scope_level=self.current_scope.scope_level + 1,
+            enclosing_scope=self.current_scope
+        )
+        # 重置当前符号表
+        self.current_scope = procedure_scope
+
+        # 遍历形参并存入新建的符号表中
+        for param in node.params:
+            param_type = self.current_scope.lookup(param.type_node.value)
+            param_name = param.var_node.value
+            var_symbol = VarSymbol(param_name, param_type)
+            self.current_scope.insert(var_symbol)
+            proc_symbol.params.append(var_symbol)
+
+        self.visit(node.block_node)
+
+        print(procedure_scope)
+
+        # 指向上一张符号表，连接了两张符号表！
+        self.current_scope = self.current_scope.enclosing_scope
+        print('LEAVE scope: %s' % proc_name)
+
     def visit_VarDecl(self, node):
         type_name = node.type_node.value
-        type_symbol = self.symtab.lookup(type_name)
+        type_symbol = self.current_scope.lookup(type_name)
 
         var_name = node.var_node.value
         var_symbol = VarSymbol(var_name, type_symbol)
 
-        # 重复定义的情况，也就是符号表中存在。
-        if self.symtab.lookup(var_name) is not None:
+        # 判断是否重复定义
+        if self.current_scope.lookup(var_name, current_scope_only=True):
             raise Exception(
                 "Error: Duplicate identifier '%s' found" % var_name
             )
 
-        self.symtab.insert(var_symbol)
+        self.current_scope.insert(var_symbol)
 
     def visit_Assign(self, node):
         self.visit(node.right)
@@ -749,7 +898,7 @@ class SemanticAnalyzer(NodeVisitor):
 
     def visit_Var(self, node):
         var_name = node.value
-        var_symbol = self.symtab.lookup(var_name)
+        var_symbol = self.current_scope.lookup(var_name)
         if var_symbol is None:
             raise Exception(
                 "Error: Symbol(identifier) not found '%s'" % var_name
@@ -841,20 +990,39 @@ def main():
     lexer = Lexer(text)
     parser = Parser(lexer)
     tree = parser.parse()
-    symtab_builder = SymbolTableBuilder()
-    symtab_builder.visit(tree)
-    print('')
-    print('Symbol Table contents:')
-    print(symtab_builder.symtab)
 
-    interpreter = Interpreter(tree)
-    result = interpreter.interpret()
+    semantic_analyzer = SemanticAnalyzer()
+    try:
+        semantic_analyzer.visit(tree)
+    except Exception as e:
+        print(e)
 
-    print('')
-    print('Run-time GLOBAL_MEMORY contents:')
-    for k, v in sorted(interpreter.GLOBAL_MEMORY.items()):
-        print('{} = {}'.format(k, v))
+
+# if __name__ == '__main__':
+#     main()
 
 
 if __name__ == '__main__':
-    main()
+    text = """
+program Main;
+   var x, y: real;
+
+   procedure Alpha(a : integer);
+      var y : integer;
+   begin
+      x := b + x + y; { ERROR here! }
+   end;
+
+begin { Main }
+
+end.  { Main }
+"""
+
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    tree = parser.parse()
+    semantic_analyzer = SemanticAnalyzer()
+    try:
+        semantic_analyzer.visit(tree)
+    except Exception as e:
+        print(e)
