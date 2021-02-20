@@ -8,7 +8,7 @@
 
 顺便写了一个[踩坑记录](https://blog.weijiew.com/2021/02/22-lsbasi-summary/)，主要记录学习过程中遇到问题的解决方案以及一些心得体会。
 
-除此之外，我还翻译了前七章。因为太费时间就先暂停了，目前放在了这个文件夹下 [lsbasi](https://github.com/weijiew/codestep/tree/master/docs/book/lsbasi)。
+除此之外，因为原版是英文的，顺便翻译了前五章。但因为太费时间就先暂停了，目前放在了这个文件夹下 [lsbasi](https://github.com/weijiew/codestep/tree/master/docs/book/lsbasi)。
 
 ## 🥳 Commit
 
