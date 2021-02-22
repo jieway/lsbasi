@@ -1,6 +1,6 @@
 # 🧐 Let’s Build A Simple Interpreter.
 
-> 荀子：“不闻不若闻之，闻之若不见之，见之不若知之，知之不若行之。”
+> “不闻不若闻之，闻之若不见之，见之不若知之，知之不若行之。”  —— 荀子
 
 仓库名称 lsbasi 是 Let’s Build A Simple Interpreter 首字母缩写。
 
