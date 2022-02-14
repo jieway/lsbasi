@@ -6,9 +6,7 @@
 
 原作者的 [repo](https://github.com/rspivak/lsbasi/) 。由于我想自己实现一遍，所以并没有直接 fork 。
 
-顺便写了一个[踩坑记录](https://blog.weijiew.com/2021/02/22-lsbasi-summary/)，主要记录学习过程中遇到问题的解决方案以及一些心得体会。
-
-除此之外，因为原版是英文的，抱着学习英语的心态顺便翻译了前五章。但因为太费时间就先暂停了，目前放在了这个页面下 [lsbasi](https://cs.weijiew.com/book/lsbasi/ch0.html)。（侵删）
+顺便写了一个[踩坑记录](https://blog-weijiew.vercel.app/17-lsbasi/)，主要记录学习过程中遇到问题的解决方案以及一些心得体会。
 
 ## 🥳 Commit
 
